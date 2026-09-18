@@ -175,6 +175,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    order: 1; /* always the middle grid item -- panels get order 0/2, swapped
+                 via JS, so this column never has to hold a full panel */
   }
   .swap button {
     width: 44px; height: 44px;
@@ -340,6 +342,9 @@
   const examplesEl = document.getElementById('examples');
   const swapBtn = document.getElementById('swapBtn');
   const converter = document.querySelector('.converter');
+  const panels = converter.querySelectorAll('.panel');
+  panels[0].style.order = '0';
+  panels[1].style.order = '2';
 
   const EXAMPLES = [
     { label: 'ka + aa', sharada: '𑆑𑆳' },
@@ -397,8 +402,13 @@
   });
 
   swapBtn.addEventListener('click', () => {
-    const panels = converter.querySelectorAll('.panel');
-    converter.insertBefore(panels[1], panels[0]);
+    // Swap visual position via CSS order, not DOM position -- moving the
+    // actual nodes made the grid's middle (auto-sized, meant for the
+    // round button) column receive a full text panel instead on every
+    // other click, squashing all three columns unevenly.
+    const tmp = panels[0].style.order;
+    panels[0].style.order = panels[1].style.order;
+    panels[1].style.order = tmp;
   });
 
   // seed with a working example so the page shows real conversion at rest
