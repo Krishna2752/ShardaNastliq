@@ -1,0 +1,401 @@
+<title>Koshur Script Bridge</title>
+<meta name="description" content="Live Sharada ↔ Kashmiri Perso-Arabic transliteration demo for the koshur-sharada engine.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Source+Serif+4:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+Sharada&family=Noto+Nastaliq+Urdu:wght@400;600&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --paper: #ECE1CC;
+    --paper-raised: #F4EBDA;
+    --ink: #35271C;
+    --ink-soft: #6B5A47;
+    --rule: #D8C7A8;
+    --saffron: #C08A1E;
+    --saffron-ink: #6E4A0C;
+    --dal-teal: #2C6E68;
+    --dal-teal-soft: #E4EFEC;
+    --danger: #A8442E;
+    --shadow: 0 1px 2px rgba(53, 39, 28, 0.08), 0 6px 20px -8px rgba(53, 39, 28, 0.25);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #221A13;
+      --paper-raised: #2B2118;
+      --ink: #EDE1CD;
+      --ink-soft: #B8A98F;
+      --rule: #453522;
+      --saffron: #E0A83C;
+      --saffron-ink: #F2CD84;
+      --dal-teal: #6FC2B8;
+      --dal-teal-soft: #223330;
+      --danger: #E2836A;
+      --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px -8px rgba(0, 0, 0, 0.5);
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #221A13;
+    --paper-raised: #2B2118;
+    --ink: #EDE1CD;
+    --ink-soft: #B8A98F;
+    --rule: #453522;
+    --saffron: #E0A83C;
+    --saffron-ink: #F2CD84;
+    --dal-teal: #6FC2B8;
+    --dal-teal-soft: #223330;
+    --danger: #E2836A;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px -8px rgba(0, 0, 0, 0.5);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "Source Serif 4", Georgia, serif;
+    padding: 32px 16px 48px;
+    max-width: 880px;
+    margin: 0 auto;
+  }
+
+  header { margin-bottom: 28px; }
+  h1 {
+    font-family: "Fraunces", "Source Serif 4", serif;
+    font-size: clamp(1.7rem, 1.3rem + 1.6vw, 2.4rem);
+    font-weight: 600;
+    margin: 0 0 6px;
+    text-wrap: balance;
+  }
+  .tagline {
+    color: var(--ink-soft);
+    font-size: 0.98rem;
+    max-width: 60ch;
+    line-height: 1.5;
+    margin: 0;
+  }
+  .status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--saffron-ink);
+    background: var(--paper-raised);
+    border: 1px solid var(--rule);
+    padding: 4px 10px 4px 8px;
+    border-radius: 100px;
+    margin-top: 12px;
+  }
+  .status-pill .dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--saffron);
+    flex: none;
+  }
+
+  .converter {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 14px;
+    align-items: stretch;
+  }
+  @media (max-width: 640px) {
+    .converter { grid-template-columns: 1fr; }
+    .swap { transform: rotate(90deg); justify-self: center; }
+  }
+
+  .panel {
+    background: var(--paper-raised);
+    border: 1px solid var(--rule);
+    border-radius: 14px;
+    box-shadow: var(--shadow);
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 0;
+  }
+  .panel-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 8px;
+  }
+  .panel-title {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+  .panel-sample {
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+  }
+  textarea {
+    width: 100%;
+    min-height: 130px;
+    resize: vertical;
+    background: transparent;
+    color: var(--ink);
+    border: none;
+    outline: none;
+    font-size: 1.5rem;
+    line-height: 1.7;
+    padding: 4px 2px;
+  }
+  #sharadaBox { font-family: "Noto Sans Sharada", serif; }
+  #persoBox { font-family: "Noto Nastaliq Urdu", serif; direction: rtl; font-size: 1.7rem; }
+  textarea::placeholder { color: var(--ink-soft); opacity: 0.6; font-family: "Source Serif 4", serif; font-size: 1rem; }
+
+  .panel-foot {
+    display: flex;
+    justify-content: flex-end;
+  }
+  button.copy {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.03em;
+    background: none;
+    border: 1px solid var(--rule);
+    color: var(--ink-soft);
+    border-radius: 8px;
+    padding: 5px 10px;
+    cursor: pointer;
+  }
+  button.copy:hover { border-color: var(--dal-teal); color: var(--dal-teal); }
+
+  .swap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .swap button {
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    border: 1px solid var(--rule);
+    background: var(--paper-raised);
+    color: var(--dal-teal);
+    font-size: 1.2rem;
+    cursor: pointer;
+    box-shadow: var(--shadow);
+  }
+  .swap button:hover { border-color: var(--dal-teal); }
+  .swap button:focus-visible, textarea:focus-visible, button:focus-visible, summary:focus-visible {
+    outline: 2px solid var(--dal-teal);
+    outline-offset: 2px;
+  }
+
+  .examples {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 18px 0 0;
+  }
+  .example-chip {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.76rem;
+    background: var(--dal-teal-soft);
+    color: var(--dal-teal);
+    border: 1px solid transparent;
+    border-radius: 100px;
+    padding: 6px 12px;
+    cursor: pointer;
+  }
+  .example-chip:hover { border-color: var(--dal-teal); }
+
+  details.limits {
+    margin-top: 28px;
+    border: 1px solid var(--rule);
+    border-radius: 12px;
+    background: var(--paper-raised);
+    padding: 4px 16px;
+  }
+  details.limits summary {
+    cursor: pointer;
+    padding: 12px 0;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.78rem;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: var(--danger);
+  }
+  .limits ol {
+    margin: 0 0 14px;
+    padding-left: 1.2em;
+    font-size: 0.92rem;
+    line-height: 1.6;
+    color: var(--ink);
+  }
+  .limits li { margin-bottom: 10px; }
+  .limits code {
+    font-family: "IBM Plex Mono", monospace;
+    background: var(--paper);
+    padding: 1px 5px;
+    border-radius: 4px;
+    font-size: 0.85em;
+  }
+
+  footer {
+    margin-top: 28px;
+    font-size: 0.82rem;
+    color: var(--ink-soft);
+    border-top: 1px solid var(--rule);
+    padding-top: 14px;
+  }
+</style>
+
+<header>
+  <h1>Koshur Script Bridge</h1>
+  <p class="tagline">
+    A live demo of <code>koshur-sharada</code>: deterministic transliteration between
+    the Sharada script and Kashmiri Perso-Arabic (Nastaliq). Type fully-diacritized
+    text into either box.
+  </p>
+  <span class="status-pill"><span class="dot"></span>Working alpha &mdash; unverified mapping choices below</span>
+</header>
+
+<main>
+  <div class="converter">
+    <div class="panel">
+      <div class="panel-head">
+        <span class="panel-title">Sharada</span>
+        <span class="panel-sample" lang="saz">𑆯𑆳𑆫𑆡𑆳</span>
+      </div>
+      <textarea id="sharadaBox" placeholder="𑆑𑆳 type Sharada here…" aria-label="Sharada text"></textarea>
+      <div class="panel-foot"><button class="copy" data-target="sharadaBox">Copy</button></div>
+    </div>
+
+    <div class="swap">
+      <button id="swapBtn" title="Swap panels" aria-label="Swap panel order">⇄</button>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <span class="panel-title">Perso-Arabic</span>
+        <span class="panel-sample" lang="ks" dir="rtl">شاردا</span>
+      </div>
+      <textarea id="persoBox" placeholder="…یہاں کأشُر لِکھِو" aria-label="Perso-Arabic text" dir="rtl"></textarea>
+      <div class="panel-foot"><button class="copy" data-target="persoBox">Copy</button></div>
+    </div>
+  </div>
+
+  <div class="examples" id="examples"></div>
+
+  <details class="limits">
+    <summary>Known limitations of this engine &amp; demo (read before trusting output)</summary>
+    <ol>
+      <li>
+        <strong>Kashmiri-only Sharada vowels have no real Unicode codepoints yet.</strong>
+        This engine writes the nearest Sharada vowel plus a borrowed Devanagari
+        combining diacritic, the Sharada revival community's own workaround &mdash;
+        not something with an official codepoint or confirmed font support.
+      </li>
+      <li>
+        <strong>Kashmiri's dental affricates (<span lang="ks" dir="rtl">ژ</span>/<span lang="ks" dir="rtl">ژھ</span>)
+        don't exist in Sharada at all.</strong> They're rendered here as
+        nukta-marked <code>ca</code>/<code>cha</code>, a project convention
+        pending community review, not a documented standard.
+      </li>
+      <li>
+        <strong>Long-e/long-i and long-o/long-u share one Perso-Arabic spelling</strong>
+        (both write as zer+yeh, or pesh+waw). Converting Perso-Arabic &rarr; Sharada
+        will pick one reading; this is a property of the orthography, not a bug.
+      </li>
+      <li>
+        <strong>This demo needs fully-diacritized input.</strong> Under-diacritized
+        Perso-Arabic (how Kashmiri is normally typed) needs a diacritizer model
+        first &mdash; not wired into this browser demo (see the project README for
+        the CLI's <code>--diacritize</code> flag, which does support it).
+      </li>
+      <li>
+        <strong>None of these mapping choices have been checked by a native
+        Kashmiri speaker</strong> against the Sharada revival primers yet.
+        Treat every output on this page as a best-effort guess, not fact.
+      </li>
+    </ol>
+  </details>
+
+  <footer>
+    This page runs a JavaScript port of the actual <code>koshur_sharada</code>
+    Python engine's parsing logic; its codepoint tables are generated directly
+    from the Python source, not retyped by hand. See the project's README.md
+    and CONTEXT.md for the full status and history.
+  </footer>
+</main>
+
+<script src="demo.js"></script>
+<script>
+(async () => {
+  const shrBox = document.getElementById('sharadaBox');
+  const paBox = document.getElementById('persoBox');
+  const examplesEl = document.getElementById('examples');
+  const swapBtn = document.getElementById('swapBtn');
+  const converter = document.querySelector('.converter');
+
+  const EXAMPLES = [
+    { label: 'ka + aa', sharada: '𑆑𑆳' },
+    { label: 'nasalized vowel', sharada: '𑆑𑆳𑆁' },
+    { label: 'consonant cluster', sharada: '𑆑𑇀𑆠' },
+    { label: 'kashmiri schwa', sharada: '𑆑ऺ' },
+  ];
+
+  function safeStorage(fn, fallback) {
+    try { return fn(); } catch { return fallback; }
+  }
+
+  try {
+    await window.KoshurSharada.loadData();
+  } catch (e) {
+    shrBox.placeholder = 'Failed to load mapping data.';
+    paBox.placeholder = 'Failed to load mapping data.';
+    return;
+  }
+
+  function fromSharada() {
+    paBox.value = window.KoshurSharada.sharadaToPersoarabic(shrBox.value);
+  }
+  function fromPersoarabic() {
+    shrBox.value = window.KoshurSharada.persoarabicToSharada(paBox.value);
+  }
+
+  shrBox.addEventListener('input', fromSharada);
+  paBox.addEventListener('input', fromPersoarabic);
+
+  EXAMPLES.forEach((ex) => {
+    const chip = document.createElement('button');
+    chip.className = 'example-chip';
+    chip.type = 'button';
+    chip.textContent = `${ex.label}  ${ex.sharada}`;
+    chip.addEventListener('click', () => {
+      shrBox.value = ex.sharada;
+      fromSharada();
+    });
+    examplesEl.appendChild(chip);
+  });
+
+  document.querySelectorAll('button.copy').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const target = document.getElementById(btn.dataset.target);
+      try {
+        await navigator.clipboard.writeText(target.value);
+        const original = btn.textContent;
+        btn.textContent = 'Copied';
+        setTimeout(() => { btn.textContent = original; }, 1200);
+      } catch {
+        target.select();
+      }
+    });
+  });
+
+  swapBtn.addEventListener('click', () => {
+    const panels = converter.querySelectorAll('.panel');
+    converter.insertBefore(panels[1], panels[0]);
+  });
+
+  // seed with a working example so the page shows real conversion at rest
+  shrBox.value = EXAMPLES[0].sharada;
+  fromSharada();
+})();
+</script>
